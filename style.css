@@ -178,6 +178,9 @@ input[type="number"]:focus {
     justify-content: space-between;
     align-items: center;
     font-size: 1.1em;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(46, 111, 64, 0.15);
 }
 
 .result span:first-child {
@@ -190,6 +193,63 @@ input[type="number"]:focus {
     font-weight: 800;
     font-size: 1.6em;
     letter-spacing: -1px;
+}
+
+.target-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.target-input-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.target-input-group label {
+    color: #2E6F40;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.target-input-group input {
+    flex: 0 1 140px;
+    padding: 8px 12px;
+    border: 2px solid #e8e8e8;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: #fff;
+    transition: all 0.3s ease;
+}
+
+.target-input-group input:focus {
+    outline: none;
+    border-color: #2E6F40;
+    box-shadow: 0 0 0 3px rgba(46, 111, 64, 0.1);
+}
+
+.required-grade {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(46, 111, 64, 0.05);
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 1em;
+}
+
+.required-grade span:first-child {
+    color: #2E6F40;
+    font-weight: 600;
+}
+
+.required-grade span:last-child {
+    color: #2E6F40;
+    font-weight: 700;
+    font-size: 1.3em;
 }
 
 /* Responsive design */
@@ -244,9 +304,36 @@ input[type="number"]:focus {
         font-size: 0.9em;
         flex-direction: column;
         gap: 8px;
+        margin-bottom: 15px;
+        padding-bottom: 12px;
     }
     
     .result span:last-child {
         font-size: 1.4em;
+    }
+    
+    .target-input-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .target-input-group label {
+        min-width: auto;
+    }
+    
+    .target-input-group input {
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    .required-grade {
+        font-size: 0.9em;
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .required-grade span:last-child {
+        font-size: 1.2em;
     }
 }

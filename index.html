@@ -32,6 +32,35 @@
                     <span>Final Grade:</span>
                     <span id="finalGrade">-</span>
                 </div>
+                <div class="target-section">
+                    <div class="target-input-group">
+                        <label for="targetGrade">Target Grade:</label>
+                        <input
+                            type="number"
+                            id="targetGrade"
+                            step="0.1"
+                            min="1"
+                            max="6"
+                            placeholder="e.g. 4.0"
+                            oninput="calculateRequiredGrade()"
+                        >
+                        <label for="targetWeight">Weight (%):</label>
+                        <input
+                            type="number"
+                            id="targetWeight"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            placeholder="100"
+                            value="100"
+                            oninput="calculateRequiredGrade()"
+                        >
+                    </div>
+                    <div class="required-grade" id="requiredGradeSection" style="display: none;">
+                        <span>Required Grade:</span>
+                        <span id="requiredGrade">-</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

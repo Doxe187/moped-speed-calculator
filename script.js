@@ -59,22 +59,22 @@ function renderGrades() {
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>
-                <input 
-                    type="number" 
-                    step="0.1" 
-                    min="1" 
-                    max="6" 
+                <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    max="6"
                     placeholder="Enter grade (1-6)"
                     value="${grade.value}"
                     onchange="updateGradeValue(${grade.id}, this.value)"
                 >
             </td>
             <td>
-                <input 
-                    type="number" 
-                    step="0.1" 
-                    min="0" 
-                    max="100" 
+                <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
                     placeholder="Percentage"
                     value="${grade.percentage}"
                     onchange="updateGradePercentage(${grade.id}, this.value)"
@@ -115,6 +115,59 @@ function calculateFinalGrade() {
     
     const finalGrade = totalWeightedGrade / totalPercentage;
     document.getElementById('finalGrade').textContent = finalGrade.toFixed(2);
+    
+    // Recalculate required grade if target is set
+    calculateRequiredGrade();
+}
+
+// Calculate what grade is needed to reach target
+function calculateRequiredGrade() {
+    const targetInput = document.getElementById('targetGrade');
+    const weightInput = document.getElementById('targetWeight');
+    const targetGrade = parseFloat(targetInput.value);
+    const nextWeight = parseFloat(weightInput.value) || 100;
+    const requiredSection = document.getElementById('requiredGradeSection');
+    const requiredGradeSpan = document.getElementById('requiredGrade');
+    
+    // Hide if no target or invalid
+    if (!targetGrade || isNaN(targetGrade)) {
+        requiredSection.style.display = 'none';
+        return;
+    }
+    
+    // Get valid grades
+    const validGrades = grades.filter(g => g.value !== '' && g.value !== null && !isNaN(g.value));
+    
+    if (validGrades.length === 0) {
+        requiredSection.style.display = 'none';
+        return;
+    }
+    
+    // Calculate current weighted sum and total percentage
+    let totalWeightedGrade = 0;
+    let totalPercentage = 0;
+    
+    validGrades.forEach(grade => {
+        totalWeightedGrade += grade.value * grade.percentage;
+        totalPercentage += grade.percentage;
+    });
+    
+    // Formula: (current_weighted + required*weight) / (total_percentage + weight) = target
+    // Solve for required: required = (target * (total_percentage + weight) - current_weighted) / weight
+    const requiredGrade = (targetGrade * (totalPercentage + nextWeight) - totalWeightedGrade) / nextWeight;
+    
+    requiredSection.style.display = 'flex';
+    
+    if (requiredGrade < 1) {
+        requiredGradeSpan.textContent = 'Already achieved!';
+        requiredGradeSpan.style.color = '#2E6F40';
+    } else if (requiredGrade > 6) {
+        requiredGradeSpan.textContent = 'Not achievable';
+        requiredGradeSpan.style.color = '#ff4d4f';
+    } else {
+        requiredGradeSpan.textContent = requiredGrade.toFixed(2);
+        requiredGradeSpan.style.color = '#2E6F40';
+    }
 }
 
 document.getElementById('addGradeBtn').addEventListener('click', addGrade);

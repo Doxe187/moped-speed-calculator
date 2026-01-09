@@ -21,14 +21,10 @@ function addGrade() {
     renderGrades();
 }
 
-// Clear a grade
+// Delete a grade row
 function deleteGrade(id) {
-    const grade = grades.find(g => g.id === id);
-    if (grade) {
-        grade.value = '';
-        grade.percentage = 100;
-        renderGrades();
-    }
+    grades = grades.filter(g => g.id !== id);
+    renderGrades();
 }
 
 // Update grade value
@@ -158,10 +154,11 @@ function calculateRequiredGrade() {
     
     requiredSection.style.display = 'flex';
     
-    if (requiredGrade < 1) {
+    // In Swiss system: 6 is best, 1 is worst
+    if (requiredGrade > 6) {
         requiredGradeSpan.textContent = 'Already achieved!';
         requiredGradeSpan.style.color = '#2E6F40';
-    } else if (requiredGrade > 6) {
+    } else if (requiredGrade < 1) {
         requiredGradeSpan.textContent = 'Not achievable';
         requiredGradeSpan.style.color = '#ff4d4f';
     } else {

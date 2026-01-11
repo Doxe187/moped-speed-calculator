@@ -2,14 +2,105 @@
 let grades = [];
 let gradeCounter = 0;
 
-// Initialize with 5 empty grade rows
-function init() {
-    for (let i = 0; i < 5; i++) {
-        addGrade();
+// ========== PURE CALCULATION FUNCTIONS ==========
+
+/**
+ * Compute weighted average from grades array
+ * @param {Array} gradesArray - Array of grade objects with value and percentage
+ * @returns {{average: number|null, totalWeight: number}}
+ */
+function computeWeightedAverage(gradesArray) {
+    const validGrades = gradesArray.filter(g => {
+        const val = parseFloat(g.value);
+        return g.value !== '' && Number.isFinite(val);
+    });
+    
+    if (validGrades.length === 0) {
+        return { average: null, totalWeight: 0 };
     }
+    
+    let totalWeightedGrade = 0;
+    let totalWeight = 0;
+    
+    validGrades.forEach(grade => {
+        const val = parseFloat(grade.value);
+        const weight = grade.percentage === '' ? 0 : parseFloat(grade.percentage);
+        const weightNum = Number.isFinite(weight) ? weight : 0;
+        totalWeightedGrade += val * weightNum;
+        totalWeight += weightNum;
+    });
+    
+    if (totalWeight === 0) {
+        return { average: null, totalWeight: 0 };
+    }
+    
+    return {
+        average: totalWeightedGrade / totalWeight,
+        totalWeight: totalWeight
+    };
 }
 
-// Add a new grade row
+/**
+ * Compute required grade for next assessment to reach target
+ * @param {number} currentWeightedSum - Current sum of (grade * weight)
+ * @param {number} currentWeight - Current total weight
+ * @param {number} target - Target final grade
+ * @param {number} nextWeight - Weight of next assessment
+ * @returns {number|null}
+ */
+function computeRequiredGrade(currentWeightedSum, currentWeight, target, nextWeight) {
+    if (!Number.isFinite(target) || !Number.isFinite(nextWeight) || nextWeight <= 0) {
+        return null;
+    }
+    
+    // Formula: (currentWeightedSum + required*nextWeight) / (currentWeight + nextWeight) = target
+    // Solve for required: required = (target * (currentWeight + nextWeight) - currentWeightedSum) / nextWeight
+    const required = (target * (currentWeight + nextWeight) - currentWeightedSum) / nextWeight;
+    return required;
+}
+
+/**
+ * Compute grade from points using Swiss formula
+ * @param {number} achieved - Achieved points
+ * @param {number} max - Maximum points
+ * @returns {{grade: number|null, status: string}}
+ */
+function computeGradeFromPoints(achieved, max) {
+    const achievedNum = parseFloat(achieved);
+    const maxNum = parseFloat(max);
+    
+    // Check for invalid inputs
+    if (!Number.isFinite(maxNum)) {
+        return { grade: null, status: 'empty' };
+    }
+    
+    if (maxNum <= 0) {
+        return { grade: null, status: 'invalid_max' };
+    }
+    
+    if (!Number.isFinite(achievedNum)) {
+        return { grade: null, status: 'empty' };
+    }
+    
+    if (achievedNum < 0) {
+        return { grade: null, status: 'invalid_achieved' };
+    }
+    
+    // Formula: grade = (achieved * 5) / max + 1
+    const grade = (achievedNum * 5) / maxNum + 1;
+    
+    if (achievedNum > maxNum) {
+        return { grade: grade, status: 'above_max' };
+    }
+    
+    return { grade: grade, status: 'valid' };
+}
+
+// ========== STATE MANAGEMENT ==========
+
+/**
+ * Add a new grade row
+ */
 function addGrade() {
     gradeCounter++;
     const grade = {
@@ -19,39 +110,61 @@ function addGrade() {
     };
     grades.push(grade);
     renderGrades();
+    
+    // Focus the newly added grade input
+    setTimeout(() => {
+        const newRow = document.querySelector(`[data-grade-id="${grade.id}"]`);
+        if (newRow) {
+            const gradeInput = newRow.querySelector('[data-field="grade"]');
+            if (gradeInput) {
+                gradeInput.focus();
+            }
+        }
+    }, 0);
 }
 
-// Delete a grade row
+/**
+ * Delete a grade row by ID
+ */
 function deleteGrade(id) {
     grades = grades.filter(g => g.id !== id);
     renderGrades();
 }
 
-// Update grade value
+/**
+ * Update grade value
+ */
 function updateGradeValue(id, value) {
     const grade = grades.find(g => g.id === id);
     if (grade) {
-        grade.value = value === '' ? '' : parseFloat(value);
-        calculateFinalGrade();
+        grade.value = value === '' ? '' : value;
+        updateDisplays();
     }
 }
 
-// Update grade percentage
+/**
+ * Update grade percentage/weight
+ */
 function updateGradePercentage(id, percentage) {
     const grade = grades.find(g => g.id === id);
     if (grade) {
-        grade.percentage = percentage === '' ? 0 : parseFloat(percentage);
-        calculateFinalGrade();
+        grade.percentage = percentage === '' ? '' : percentage;
+        updateDisplays();
     }
 }
 
-// Render all grades in the table
+// ========== RENDERING ==========
+
+/**
+ * Render all grades in the table
+ */
 function renderGrades() {
     const tbody = document.getElementById('gradesBody');
     tbody.innerHTML = '';
     
     grades.forEach((grade, index) => {
         const row = document.createElement('tr');
+        row.setAttribute('data-grade-id', grade.id);
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>
@@ -62,7 +175,8 @@ function renderGrades() {
                     max="6"
                     placeholder="Enter grade (1-6)"
                     value="${grade.value}"
-                    onchange="updateGradeValue(${grade.id}, this.value)"
+                    data-field="grade"
+                    data-id="${grade.id}"
                 >
             </td>
             <td>
@@ -73,141 +187,195 @@ function renderGrades() {
                     max="100"
                     placeholder="Percentage"
                     value="${grade.percentage}"
-                    onchange="updateGradePercentage(${grade.id}, this.value)"
+                    data-field="percentage"
+                    data-id="${grade.id}"
                 >
             </td>
             <td>
-                <button class="delete-btn" onclick="deleteGrade(${grade.id})">Delete</button>
+                <button class="delete-btn" data-delete-id="${grade.id}">Delete</button>
             </td>
         `;
         tbody.appendChild(row);
     });
     
-    calculateFinalGrade();
+    updateDisplays();
 }
 
-// Calculate weighted average of all grades
-function calculateFinalGrade() {
-    // Filter out empty grades
-    const validGrades = grades.filter(g => g.value !== '' && g.value !== null && !isNaN(g.value));
-    
-    if (validGrades.length === 0) {
-        document.getElementById('finalGrade').textContent = '-';
-        return;
-    }
-    
-    let totalWeightedGrade = 0;
-    let totalPercentage = 0;
-    
-    validGrades.forEach(grade => {
-        totalWeightedGrade += grade.value * grade.percentage;
-        totalPercentage += grade.percentage;
-    });
-    
-    if (totalPercentage === 0) {
-        document.getElementById('finalGrade').textContent = '-';
-        return;
-    }
-    
-    const finalGrade = totalWeightedGrade / totalPercentage;
-    document.getElementById('finalGrade').textContent = finalGrade.toFixed(2);
-    
-    // Recalculate required grade if target is set
-    calculateRequiredGrade();
+/**
+ * Update all display elements (final grade, total weight, required grade)
+ */
+function updateDisplays() {
+    updateFinalGrade();
+    updateRequiredGrade();
 }
 
-// Calculate what grade is needed to reach target
-function calculateRequiredGrade() {
+/**
+ * Update final grade and total weight display
+ */
+function updateFinalGrade() {
+    const { average, totalWeight } = computeWeightedAverage(grades);
+    
+    const finalGradeSpan = document.getElementById('finalGrade');
+    const totalWeightDisplay = document.getElementById('totalWeightDisplay');
+    
+    if (average === null) {
+        finalGradeSpan.textContent = '-';
+    } else {
+        finalGradeSpan.textContent = average.toFixed(2);
+    }
+    
+    // Show integers without decimals, keep decimals when needed
+    const weightDisplay = totalWeight % 1 === 0 ? totalWeight.toFixed(0) : totalWeight.toFixed(1);
+    totalWeightDisplay.textContent = `Total weight: ${weightDisplay}%`;
+}
+
+/**
+ * Update required grade display
+ */
+function updateRequiredGrade() {
     const targetInput = document.getElementById('targetGrade');
     const weightInput = document.getElementById('targetWeight');
     const targetGrade = parseFloat(targetInput.value);
-    const nextWeight = parseFloat(weightInput.value) || 100;
+    const nextWeight = parseFloat(weightInput.value);
     const requiredSection = document.getElementById('requiredGradeSection');
     const requiredGradeSpan = document.getElementById('requiredGrade');
     
     // Hide if no target or invalid
-    if (!targetGrade || isNaN(targetGrade)) {
+    if (!Number.isFinite(targetGrade)) {
+        requiredSection.style.display = 'none';
+        return;
+    }
+    
+    if (!Number.isFinite(nextWeight) || nextWeight <= 0) {
         requiredSection.style.display = 'none';
         return;
     }
     
     // Get valid grades
-    const validGrades = grades.filter(g => g.value !== '' && g.value !== null && !isNaN(g.value));
+    const validGrades = grades.filter(g => {
+        const val = parseFloat(g.value);
+        return g.value !== '' && Number.isFinite(val);
+    });
     
-    if (validGrades.length === 0) {
+    // Calculate current weighted sum and total weight
+    let currentWeightedSum = 0;
+    let currentWeight = 0;
+    
+    validGrades.forEach(grade => {
+        const val = parseFloat(grade.value);
+        const weight = grade.percentage === '' ? 0 : parseFloat(grade.percentage);
+        const weightNum = Number.isFinite(weight) ? weight : 0;
+        currentWeightedSum += val * weightNum;
+        currentWeight += weightNum;
+    });
+    
+    const requiredGrade = computeRequiredGrade(currentWeightedSum, currentWeight, targetGrade, nextWeight);
+    
+    if (requiredGrade === null) {
         requiredSection.style.display = 'none';
         return;
     }
-    
-    // Calculate current weighted sum and total percentage
-    let totalWeightedGrade = 0;
-    let totalPercentage = 0;
-    
-    validGrades.forEach(grade => {
-        totalWeightedGrade += grade.value * grade.percentage;
-        totalPercentage += grade.percentage;
-    });
-    
-    // Formula: (current_weighted + required*weight) / (total_percentage + weight) = target
-    // Solve for required: required = (target * (total_percentage + weight) - current_weighted) / weight
-    const requiredGrade = (targetGrade * (totalPercentage + nextWeight) - totalWeightedGrade) / nextWeight;
     
     requiredSection.style.display = 'flex';
     
     // In Swiss system: 6 is best, 1 is worst
     if (requiredGrade > 6) {
-        requiredGradeSpan.textContent = 'Already achieved!';
-        requiredGradeSpan.style.color = '#2E6F40';
-    } else if (requiredGrade < 1) {
         requiredGradeSpan.textContent = 'Not achievable';
         requiredGradeSpan.style.color = '#ff4d4f';
+    } else if (requiredGrade < 1) {
+        requiredGradeSpan.textContent = 'Already achieved';
+        requiredGradeSpan.style.color = '#2E6F40';
     } else {
         requiredGradeSpan.textContent = requiredGrade.toFixed(2);
         requiredGradeSpan.style.color = '#2E6F40';
     }
 }
 
-// Calculate grade from points
-function calculateGradeFromPoints() {
-    const maxPoints = parseFloat(document.getElementById('maxPoints').value);
-    const achievedPoints = parseFloat(document.getElementById('achievedPoints').value);
+/**
+ * Update points-to-grade display
+ */
+function updateGradeFromPoints() {
+    const maxPoints = document.getElementById('maxPoints').value;
+    const achievedPoints = document.getElementById('achievedPoints').value;
     const resultSpan = document.getElementById('calculatedGrade');
     
-    // Validate inputs
-    if (!maxPoints || !achievedPoints || isNaN(maxPoints) || isNaN(achievedPoints)) {
-        resultSpan.textContent = '-';
-        resultSpan.style.color = '#333';
-        return;
-    }
+    const result = computeGradeFromPoints(achievedPoints, maxPoints);
     
-    if (maxPoints <= 0) {
+    if (result.status === 'empty') {
+        resultSpan.textContent = '-';
+        resultSpan.style.color = 'white';
+    } else if (result.status === 'invalid_max') {
         resultSpan.textContent = 'Invalid max points';
         resultSpan.style.color = '#ff4d4f';
-        return;
-    }
-    
-    if (achievedPoints < 0) {
+    } else if (result.status === 'invalid_achieved') {
         resultSpan.textContent = 'Invalid points';
         resultSpan.style.color = '#ff4d4f';
-        return;
-    }
-    
-    // Formula: Note = (erreichtePunktzahl * 5) / MAXPUNKTZAHL + 1
-    const grade = (achievedPoints * 5) / maxPoints + 1;
-    
-    // Display result
-    if (grade > 6) {
-        resultSpan.textContent = grade.toFixed(2) + ' (above max!)';
-        resultSpan.style.color = '#ff4d4f';
-    } else if (grade < 1) {
-        resultSpan.textContent = grade.toFixed(2) + ' (below min!)';
+    } else if (result.status === 'above_max') {
+        resultSpan.textContent = result.grade.toFixed(2) + ' (above max!)';
         resultSpan.style.color = '#ff4d4f';
     } else {
-        resultSpan.textContent = grade.toFixed(2);
+        resultSpan.textContent = result.grade.toFixed(2);
         resultSpan.style.color = 'white';
     }
 }
 
-document.getElementById('addGradeBtn').addEventListener('click', addGrade);
+// ========== EVENT LISTENERS ==========
 
+/**
+ * Initialize event listeners
+ */
+function initEventListeners() {
+    // Add grade button
+    document.getElementById('addGradeBtn').addEventListener('click', addGrade);
+    
+    // Event delegation for grades table
+    const gradesBody = document.getElementById('gradesBody');
+    gradesBody.addEventListener('input', (e) => {
+        const target = e.target;
+        const field = target.getAttribute('data-field');
+        const id = parseInt(target.getAttribute('data-id'));
+        
+        if (field === 'grade') {
+            updateGradeValue(id, target.value);
+        } else if (field === 'percentage') {
+            updateGradePercentage(id, target.value);
+        }
+    });
+    
+    // Event delegation for delete buttons
+    gradesBody.addEventListener('click', (e) => {
+        const deleteButton = e.target.closest('button[data-delete-id]');
+        
+        if (deleteButton) {
+            const deleteId = deleteButton.getAttribute('data-delete-id');
+            deleteGrade(parseInt(deleteId));
+        }
+    });
+    
+    // Target grade inputs
+    document.getElementById('targetGrade').addEventListener('input', updateRequiredGrade);
+    document.getElementById('targetWeight').addEventListener('input', updateRequiredGrade);
+    
+    // Points converter inputs
+    document.getElementById('maxPoints').addEventListener('input', updateGradeFromPoints);
+    document.getElementById('achievedPoints').addEventListener('input', updateGradeFromPoints);
+}
+
+/**
+ * Initialize app with 5 empty grade rows
+ */
+function init() {
+    for (let i = 0; i < 5; i++) {
+        gradeCounter++;
+        grades.push({
+            id: gradeCounter,
+            value: '',
+            percentage: 100
+        });
+    }
+    renderGrades();
+    initEventListeners();
+}
+
+// Start the app
 init();

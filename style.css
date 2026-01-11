@@ -152,6 +152,16 @@ input[type="number"]:focus {
     transform: translateY(0);
 }
 
+.total-weight {
+    text-align: right;
+    padding: 8px 15px;
+    font-size: 0.9em;
+    color: #2E6F40;
+    font-weight: 600;
+    background-color: #f8f8f8;
+    border-top: 1px solid #f0f0f0;
+}
+
 .add-btn {
     width: calc(100% - 30px);
     margin: 15px 15px;

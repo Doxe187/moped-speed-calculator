@@ -26,6 +26,10 @@ function computeWeightedAverage(gradesArray) {
         const val = parseFloat(grade.value);
         const weight = grade.percentage === '' ? 0 : parseFloat(grade.percentage);
         const weightNum = Number.isFinite(weight) ? weight : 0;
+        if (grade.value > 6) {
+        alert("Grade have to be under or equal to 6")
+        return
+      }
         totalWeightedGrade += val * weightNum;
         totalWeight += weightNum;
     });
@@ -173,7 +177,7 @@ function renderGrades() {
                     step="0.1"
                     min="1"
                     max="6"
-                    placeholder="Enter grade (1-6)"
+                    placeholder="Enter grade "
                     value="${grade.value}"
                     data-field="grade"
                     data-id="${grade.id}"
@@ -192,7 +196,7 @@ function renderGrades() {
                 >
             </td>
             <td>
-                <button class="delete-btn" data-delete-id="${grade.id}">Delete</button>
+                <button class="delete-btn" onClick="{deleteGrade]">Delete</button>
             </td>
         `;
         tbody.appendChild(row);
@@ -219,7 +223,7 @@ function updateFinalGrade() {
     const totalWeightDisplay = document.getElementById('totalWeightDisplay');
     
     if (average === null) {
-        finalGradeSpan.textContent = '-';
+        finalGradeSpan.textContent = '';
     } else {
         finalGradeSpan.textContent = average.toFixed(2);
     }
@@ -365,7 +369,7 @@ function initEventListeners() {
  * Initialize app with 5 empty grade rows
  */
 function init() {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 4; i++) {
         gradeCounter++;
         grades.push({
             id: gradeCounter,

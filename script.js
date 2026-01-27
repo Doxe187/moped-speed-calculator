@@ -5,10 +5,13 @@ const CONFIG = {
         50: 40,
         60: 45,
         65: 50,
-        70: 55
+        70: 55,
+        72: 60,
+        74: 70
     },
     gearingMultiplier: { front: 5, rear: 2 },
-    carbStepBonus: 3,
+    carbBonuses: [0, 3, 6, 9, 10, 13, 14, 17, 20],
+    carbMaxIndex70cc: 5,
     exhaustStepBonus: 4,
     exhaustResoIndex: 3,
     maxCylinderForReso: 65
@@ -51,7 +54,9 @@ function calculateSpeed() {
         (front - CONFIG.baseGearing.front) * CONFIG.gearingMultiplier.front +
         (CONFIG.baseGearing.rear - rear) * CONFIG.gearingMultiplier.rear;
 
-    const carbBonus = carbIndex * CONFIG.carbStepBonus;
+    const effectiveCarbIndex = cylinderNum > 70 ? Math.min(carbIndex, CONFIG.carbMaxIndex70cc) : carbIndex;
+    const carbBaseIndex = cylinderNum > 70 ? 3 : 0;
+    const carbBonus = CONFIG.carbBonuses[effectiveCarbIndex] - CONFIG.carbBonuses[carbBaseIndex];
 
     const exhaustBaseIndex = cylinderNum > 60 ? 2 : 1;
     const exhaustBonus = (exhaustIndex - exhaustBaseIndex) * CONFIG.exhaustStepBonus;
@@ -65,15 +70,19 @@ function calculateSpeed() {
     elements.auspuffValue.textContent = formatBonus(exhaustBonus);
     elements.totalValue.textContent = totalSpeed + ' km/h';
 
-    let warningMsg = '';
+    const warnings = [];
     if (exhaustIndex === CONFIG.exhaustResoIndex && cylinderNum <= CONFIG.maxCylinderForReso) {
-        warningMsg = '28er Reso Auspuff auf keinen Fall mit diesem Zylinder fahren!';
+        warnings.push('28er Reso Auspuff auf keinen Fall mit diesem Zylinder fahren!');
     } else if (exhaustIndex === 0 && cylinderNum >= 65) {
-        warningMsg = '18er Auspuff auf keinen Fall mit diesem Zylinder fahren!';
+        warnings.push('18er Auspuff auf keinen Fall mit diesem Zylinder fahren!');
     }
+    if (cylinderNum <= 70 && carbIndex > CONFIG.carbMaxIndex70cc) {
+        warnings.push('Ein Vergaser größer als 19 mm bringt keinen Geschwindigkeitsvorteil.');
+    }
+    const warningMsg = warnings.join('<br>');
 
     if (warningMsg) {
-        elements.warningText.textContent = warningMsg;
+        elements.warningText.innerHTML = warningMsg;
         elements.warning.classList.remove('hidden');
     } else {
         elements.warning.classList.add('hidden');
@@ -94,8 +103,23 @@ function updateExhaustDefaults() {
     elements.auspuff.value = String(standardIndex);
 }
 
+function updateCarbDefault() {
+    const cylinderRaw = elements.zylinder.value;
+    const cylinderNum = cylinderRaw === 'stock' ? 50 : parseInt(cylinderRaw);
+    const standardIndex = cylinderNum > 70 ? 3 : 0;
+    const options = elements.vergaser.options;
+
+    for (let i = 0; i < options.length; i++) {
+        const base = options[i].textContent.replace(/ \(Standard\)/, '');
+        options[i].textContent = i === standardIndex ? base + ' (Standard)' : base;
+    }
+
+    elements.vergaser.value = String(standardIndex);
+}
+
 elements.zylinder.addEventListener('change', () => {
     updateExhaustDefaults();
+    updateCarbDefault();
     calculateSpeed();
 });
 
@@ -103,4 +127,5 @@ elements.zylinder.addEventListener('change', () => {
     .forEach(el => el.addEventListener('change', calculateSpeed));
 
 updateExhaustDefaults();
+updateCarbDefault();
 calculateSpeed();

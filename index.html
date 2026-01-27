@@ -1,24 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puch Speed calculator</title>
+    <title>Puch Maxi Geschwindigkeitsrechner</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Puch Speed calculator</h1>        
+        <h1>Puch Maxi</h1>
+        <p class="subtitle">Geschwindigkeitsrechner</p>
+
         <div class="calculator-wrapper">
-          <div class="categories">
-            <div class="ccm"> 
-              <dropdown>
-              </dropdown>
+            <div class="setup-grid">
+                <div class="select-group">
+                    <label for="zylinder">Zylinder</label>
+                    <select id="zylinder">
+                        <option value="stock">Original 50 ccm</option>
+                        <option value="50">50 ccm</option>
+                        <option value="60">60 ccm</option>
+                        <option value="65">65 ccm</option>
+                        <option value="70">70 ccm</option>
+                    </select>
+                </div>
+
+                <div class="select-group">
+                    <label for="vergaser">Vergaser</label>
+                    <select id="vergaser">
+                        <option value="0">12 mm</option>
+                        <option value="1">14 mm</option>
+                        <option value="2">15 mm</option>
+                        <option value="3">17 mm</option>
+                        <option value="4">17.5 mm</option>
+                        <option value="5">19 mm</option>
+                        <option value="6">19.5 mm</option>
+                        <option value="7">21 mm</option>
+                        <option value="8">24 mm</option>
+                    </select>
+                </div>
+
+                <div class="select-group">
+                    <label for="uebersetzung-vorne">Ritzel vorne</label>
+                    <select id="uebersetzung-vorne">
+                        <option value="9">9 Zähne</option>
+                        <option value="10">10 Zähne</option>
+                        <option value="11">11 Zähne</option>
+                        <option value="12">12 Zähne</option>
+                        <option value="13" selected>13 Zähne (Original)</option>
+                        <option value="14">14 Zähne</option>
+                        <option value="15">15 Zähne</option>
+                        <option value="16">16 Zähne</option>
+                        <option value="17">17 Zähne</option>
+                        <option value="18">18 Zähne</option>
+                    </select>
+                </div>
+
+                <div class="select-group">
+                    <label for="uebersetzung-hinten">Ritzel hinten</label>
+                    <select id="uebersetzung-hinten">
+                        <option value="36">36 Zähne</option>
+                        <option value="37">37 Zähne</option>
+                        <option value="38">38 Zähne</option>
+                        <option value="39">39 Zähne</option>
+                        <option value="40">40 Zähne</option>
+                        <option value="41">41 Zähne</option>
+                        <option value="42">42 Zähne</option>
+                        <option value="43">43 Zähne</option>
+                        <option value="44">44 Zähne</option>
+                        <option value="45" selected>45 Zähne (Original)</option>
+                        <option value="46">46 Zähne</option>
+                        <option value="47">47 Zähne</option>
+                        <option value="48">48 Zähne</option>
+                        <option value="49">49 Zähne</option>
+                        <option value="50">50 Zähne</option>
+                        <option value="51">51 Zähne</option>
+                        <option value="52">52 Zähne</option>
+                    </select>
+                </div>
+
+                <div class="select-group full-width">
+                    <label for="auspuff">Auspuff</label>
+                    <select id="auspuff">
+                        <option value="0">18er</option>
+                        <option value="1">22er</option>
+                        <option value="2">28er</option>
+                        <option value="3">28er Reso</option>
+                    </select>
+                </div>
             </div>
-          </div>
+
+            <div class="result-section">
+                <div class="speed-display">
+                    <span class="speed-label">Geschätzte Endgeschwindigkeit</span>
+                    <span class="speed-value" id="speed-result">35</span>
+                    <span class="speed-unit">km/h</span>
+                </div>
+
+                <div id="warning" class="warning hidden">
+                    <span class="warning-icon">&#9888;</span>
+                    <span class="warning-text">28er Reso Auspuff auf keinen Fall mit diesem Zylinder fahren!</span>
+                </div>
+
+                <div class="breakdown">
+                    <div class="breakdown-title">Aufschlüsselung</div>
+                    <div class="breakdown-row">
+                        <span>Basis (Zylinder)</span>
+                        <span id="basis-value">35 km/h</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span>Übersetzung</span>
+                        <span id="uebersetzung-value">±0 km/h</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span>Vergaser</span>
+                        <span id="vergaser-value">±0 km/h</span>
+                    </div>
+                    <div class="breakdown-row">
+                        <span>Auspuff</span>
+                        <span id="auspuff-value">±0 km/h</span>
+                    </div>
+                    <div class="breakdown-row breakdown-total">
+                        <span>Gesamt</span>
+                        <span id="total-value">35 km/h</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    
+
     <script src="script.js"></script>
 </body>
 </html>

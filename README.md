@@ -1,6 +1,6 @@
 # Mofa Speed Calculator
 
-A simple web calculator to calculate the speed of your setup from your mofa.
+A simple web calculator to calculate the speed of your moped setup
 
 ## Features
 
